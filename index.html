@@ -262,11 +262,10 @@
     document.addEventListener('keyup', onKeyUp, false);
 
     //fire particles
-    var particleSystem, uniforms;
     var particles = 50;
     var radius = 3;
     
-    uniforms = {
+    var uniforms = {
       color: {
         value: new THREE.Color(0xff0000)  //0xff6633 = orange, 0xE5E500 = yellow
       },
@@ -304,7 +303,7 @@
     geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
     geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    particleSystem = new THREE.Points(geometry, shaderMaterial);
+    var particleSystem = new THREE.Points(geometry, shaderMaterial);
     
     particleSystem.position.set(25, 6, -92.5);
     
