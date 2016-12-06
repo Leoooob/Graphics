@@ -3,13 +3,57 @@
 <head>
   <title>CS32310 - Assignment</title>
   <style>
-    body {
-      margin: 0;
+    html, 
+    body { 
+      width: 100%; 
+      height: 100%; 
+    } 
+     
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      font-family: arial; 
+      background-color: #ffffff; 
+    } 
+     
+    #blocker { 
+      width: 100%; 
+      height: 100%; 
+      position: absolute; 
+      background-color: rgba(0, 0, 0, 0.5); 
+    } 
+     
+    #instructions { 
+      width: 100%; 
+      height: 100%; 
+      color: #ffffff; 
+      cursor: pointer; 
+      text-align: center; 
+      display: -webkit-box; 
+      display: -moz-box; 
+      display: box; 
+      -webkit-box-orient: horizontal; 
+      -moz-box-orient: horizontal; 
+      box-orient: horizontal; 
+      -webkit-box-pack: center; 
+      -moz-box-pack: center; 
+      box-pack: center; 
+      -webkit-box-align: center; 
+      -moz-box-align: center; 
+      box-align: center; 
     }
     
     canvas {
       width: 100%;
       height: 100%
+    }
+    
+    #vertexshader {
+      display: none;
+    }
+    
+    #fragmentshader {
+      display: none;
     }
   </style>
 
@@ -19,47 +63,13 @@
   <script src="js/build/MTLLoader.js"></script>
   <script src="js/build/OBJLoader.js"></script>
 
-  <style>
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-    }
-    
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: arial;
-      background-color: #ffffff;
-    }
-    
-    #blocker {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-    
-    #instructions {
-      width: 100%;
-      height: 100%;
-      color: #ffffff;
-      cursor: pointer;
-      text-align: center;
-      display: -webkit-box;
-      display: -moz-box;
-      display: box;
-      -webkit-box-orient: horizontal;
-      -moz-box-orient: horizontal;
-      box-orient: horizontal;
-      -webkit-box-pack: center;
-      -moz-box-pack: center;
-      box-pack: center;
-      -webkit-box-align: center;
-      -moz-box-align: center;
-      box-align: center;
-    }
-  </style>
+  <!--<script type="x-shader/x-vertex" id="vertexshader">
+    attribute float size; attribute vec3 customColor; varying vec3 vColor; void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_PointSize = size * ( 300.0 / -mvPosition.z ); gl_Position = projectionMatrix * mvPosition; }
+  </script>
+
+  <script type="x-shader/x-fragment" id="fragmentshader">
+    uniform vec3 color; uniform sampler2D texture; varying vec3 vColor; void main() { gl_FragColor = vec4( color * vColor, 1.0 ); gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); }
+  </script>-->
 </head>
 
 <body>
@@ -207,7 +217,7 @@
         // interact with doors and shit
         // global interact variable switch?
         break;
-      
+
       case 27: // esc
         //stop controls
         controlsEnabled = false;
@@ -240,7 +250,7 @@
       case 32:
         //trigger global interact switch
         break;
-      
+
       case 27: // esc
         //stop controls
         controlsEnabled = false;
@@ -250,6 +260,53 @@
 
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
+
+    //fire particles
+    /*var particleSystem, uniforms;
+    var particles = 100;
+    var radius = 20;
+    
+    uniforms = {
+      color: {
+        value: new THREE.Color(0xff0000)
+      },
+      texture: {
+        value: new THREE.TextureLoader().load("tex/spark.png")
+      }
+    };
+    var shaderMaterial = new THREE.ShaderMaterial({
+      uniforms: uniforms,
+      vertexShader: document.getElementById('vertexshader').textContent,
+      fragmentShader: document.getElementById('fragmentshader').textContent,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+      transparent: true
+    });
+    
+    geometry = new THREE.BufferGeometry();
+    var positions = new Float32Array(particles * 3);
+    var colors = new Float32Array(particles * 3);
+    var sizes = new Float32Array(particles);
+    var color = new THREE.Color();
+    for (var i = 0, i3 = 0; i < particles; i++, i3 += 3) {
+      positions[i3 + 0] = (Math.random() * 2 - 1) * radius;
+      positions[i3 + 1] = (Math.random() * 2 - 1) * radius;
+      positions[i3 + 2] = (Math.random() * 2 - 1) * radius;
+      color.setHSL(i / particles, 1.0, 0.5);
+      colors[i3 + 0] = color.r;
+      colors[i3 + 1] = color.g;
+      colors[i3 + 2] = color.b;
+      sizes[i] = 20;
+    }
+    
+    geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+    geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    particleSystem = new THREE.Points(geometry, shaderMaterial);
+    
+    particleSystem.position.set(0, 0, 0);
+    
+    scene.add(particleSystem);*/
 
     //raycasting things
     var mouse_pos = new THREE.Vector2();
@@ -327,10 +384,10 @@
     dining_light_1.target.position.set(-15, 10, 75);
     dining_light_1.castShadow = true;
     dining_light_1.target.updateMatrixWorld();
-    
+
     dining_light_1.shadow.camera.near = 5;
     dining_light_1.shadow.camera.far = 200;
-    
+
     scene.add(dining_light_1);
 
     //var dining_light_1_helper = new THREE.SpotLightHelper(dining_light_1);
@@ -343,11 +400,11 @@
     dining_light_2.target.position.set(-25, 0, 85);
     dining_light_2.castShadow = true;
     dining_light_2.target.updateMatrixWorld();
-    
+
     dining_light_2.shadow.camera.near = 5;
     dining_light_2.shadow.camera.far = 200;
-    
-    
+
+
     scene.add(dining_light_2);
 
     //var dining_light_2_helper = new THREE.SpotLightHelper(dining_light_2);
@@ -805,8 +862,8 @@
     //////
     //cloth stuff
     //////
-    
-    
+
+
 
     ////////////////////////////////////////
     //BEGIN OBJECTS
@@ -894,14 +951,14 @@
       objLoader.load("obj/bulb/dangle-bulb.obj", function (object) {
         object.rotation.x = (Math.PI * (180 / 180));
         object.scale.set(0.25, 0.25, 0.25);
-        object.position.set(5, 18, -40);   //living_1
+        object.position.set(5, 18, -40); //living_1
         object.castShadow = true;
         object.name = "bulb";
 
         scene.add(object);
 
         var my_hanging_bulbs = [object.clone(), object.clone(), object.clone()]
-        
+
         my_hanging_bulbs[0].position.set(-25, 18, 160); //garage_1
         my_hanging_bulbs[1].position.set(-25, 18, 185); //garage_2
         my_hanging_bulbs[2].position.set(30, 18, 75); //kitchen_1
@@ -929,7 +986,7 @@
       objLoader.setMaterials(materials);
       objLoader.load("obj/footstool/footstool.obj", function (object) {
         object.position.set(-10, 0, -50);
-        object.rotation.y = (Math.PI * (90/180));
+        object.rotation.y = (Math.PI * (90 / 180));
         object.scale.set(0.25, 0.25, 0.25);
         object.castShadow = true;
         object.name = "foot stool";
@@ -1036,6 +1093,15 @@
     function render() {
       renderer.render(scene, camera);
       requestAnimationFrame(render);
+      
+      //fire stuff
+      /*var time = Date.now() * 0.005;
+      particleSystem.rotation.z = 0.01 * time;
+      var sizes = geometry.attributes.size.array;
+      for (var i = 0; i < particles; i++) {
+          sizes[i] = 10 * (1 + Math.sin(0.1 * i + time));
+      }
+      geometry.attributes.size.needsUpdate = true;*/
 
       if (controlsEnabled) {
         raycaster.ray.origin.copy(controls.getObject().position);
