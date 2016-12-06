@@ -12,8 +12,8 @@ newmtl Material__48
 	Kd 0.5880 0.5880 0.5880
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka C:\Users\Leon\Desktop\leather.jpg
-	map_Kd C:\Users\Leon\Desktop\leather.jpg
+	map_Ka http://i.imgur.com/ezv2B4m.jpg
+	map_Kd http://i.imgur.com/ezv2B4m.jpg
 
 newmtl wire_177088027
 	Ns 32

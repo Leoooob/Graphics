@@ -73,7 +73,6 @@
   <script>
     var width = window.innerWidth;
     var height = window.innerHeight;
-    //console.log(width + 'x' + height);
 
     //pointerlock controls
     var havePointerLock = 'pointerLockElement' in document ||
@@ -176,7 +175,6 @@
 
     // define the camera from which the scene will be rendered and seen
     var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    //camera.position.z = 5; // pull the camera away from the center in order to see the object properly
 
     //add controls
     var controls = new THREE.PointerLockControls(camera);
@@ -209,6 +207,11 @@
         // interact with doors and shit
         // global interact variable switch?
         break;
+      
+      case 27: // esc
+        //stop controls
+        controlsEnabled = false;
+        break;
       }
     };
 
@@ -236,6 +239,11 @@
 
       case 32:
         //trigger global interact switch
+        break;
+      
+      case 27: // esc
+        //stop controls
+        controlsEnabled = false;
         break;
       }
     };
@@ -314,13 +322,15 @@
 
     ////////////////////////////////
     //dining_light_1 - kitchen wall
-    var dining_light_1 = new THREE.SpotLight(0xffffff, 0.5, 25);
+    var dining_light_1 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5); //SpotLight( color, intensity, distance, angle, penumbra, decay )
     dining_light_1.position.set(-25, 18, 75);
-    dining_light_1.target.position.set(-15, 0, 75);
-    dining_light_1.penumbra = 0.1
-    dining_light_1.angle = 0.9;
+    dining_light_1.target.position.set(-15, 10, 75);
     dining_light_1.castShadow = true;
     dining_light_1.target.updateMatrixWorld();
+    
+    dining_light_1.shadow.camera.near = 5;
+    dining_light_1.shadow.camera.far = 200;
+    
     scene.add(dining_light_1);
 
     //var dining_light_1_helper = new THREE.SpotLightHelper(dining_light_1);
@@ -328,13 +338,16 @@
 
     ////////////////////////////////
     //dining_light_2 - garage
-    var dining_light_2 = new THREE.SpotLight(0xffffff, 0.5, 25);
+    var dining_light_2 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
     dining_light_2.position.set(-25, 18, 75);
     dining_light_2.target.position.set(-25, 0, 85);
-    dining_light_2.penumbra = 0.1
-    dining_light_2.angle = 0.9;
     dining_light_2.castShadow = true;
     dining_light_2.target.updateMatrixWorld();
+    
+    dining_light_2.shadow.camera.near = 5;
+    dining_light_2.shadow.camera.far = 200;
+    
+    
     scene.add(dining_light_2);
 
     //var dining_light_2_helper = new THREE.SpotLightHelper(dining_light_2);
@@ -342,11 +355,9 @@
 
     ////////////////////////////////
     //dining_light_3 - back of house wall
-    var dining_light_3 = new THREE.SpotLight(0xffffff, 0.5, 25);
+    var dining_light_3 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
     dining_light_3.position.set(-25, 18, 75);
     dining_light_3.target.position.set(-35, 0, 75);
-    dining_light_3.penumbra = 0.1
-    dining_light_3.angle = 0.9;
     dining_light_3.castShadow = true;
     dining_light_3.target.updateMatrixWorld();
     scene.add(dining_light_3);
@@ -356,11 +367,9 @@
 
     ////////////////////////////////
     //dining_light_4 - living room
-    var dining_light_4 = new THREE.SpotLight(0xffffff, 0.5, 25);
+    var dining_light_4 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
     dining_light_4.position.set(-25, 18, 75);
     dining_light_4.target.position.set(-25, 0, 65);
-    dining_light_4.penumbra = 0.1
-    dining_light_4.angle = 0.9;
     dining_light_4.castShadow = true;
     dining_light_4.target.updateMatrixWorld();
     scene.add(dining_light_4);
@@ -371,7 +380,7 @@
     ////////////////////////////////
     //kitchen_light_1
     var kitchen_light_1 = new THREE.PointLight(0xffffff, 0.75);
-    kitchen_light_1.position.set(30, 18, 75);
+    kitchen_light_1.position.set(30, 16, 75);
     kitchen_light_1.castShadow = true;
     scene.add(kitchen_light_1);
 
@@ -497,7 +506,7 @@
     // house entrance roof
     var roof_geo_2 = new THREE.PlaneGeometry(50, 50, 0);
     var roof_mat_2 = new THREE.MeshPhongMaterial({
-      color: 0x0000ff,
+      map: ceiling_texture,
       side: THREE.DoubleSide
     });
 
@@ -804,15 +813,63 @@
     ////////////////////////////////////////
     var mtlLoader = new THREE.MTLLoader();
 
-    // cai's desk
-    mtlLoader.load("obj/desk/desk.mtl", function (materials) {
+    // fireplace
+    mtlLoader.load("obj/fireplace/fireplace.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
-      objLoader.load("obj/desk/desk.obj", function (object) {
-        object.position.set(37.5, 0.5, -70);
-        object.rotation.y = (Math.PI * (270 / 180));
-        object.scale.set(0.5, 0.5, 0.5);
+      objLoader.load("obj/fireplace/fireplace.obj", function (object) {
+        object.position.set(25, 0.5, -92.5);
+        object.rotation.y = (Math.PI * (360 / 180));
+        object.scale.set(2, 2, 2);
+        object.castShadow = true;
+        object.name = "fireplace";
+
+        scene.add(object);
+
+        object.traverse(function (obj) {
+          if (obj instanceof THREE.Mesh) {
+            obj.receiveShadow = true;
+            obj.castShadow = true;
+            obj.geometry.computeVertexNormals();
+            objects.push(obj);
+          }
+        })
+      });
+    });
+
+    // living light shade
+    mtlLoader.load("obj/bulb/lampshade.mtl", function (materials) {
+      materials.preload();
+      var objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load("obj/bulb/lampshade.obj", function (object) {
+        object.position.set(5, 15, -40);
+        object.scale.set(5, 5, 5);
+        object.castShadow = true;
+        object.name = "desk";
+
+        scene.add(object);
+
+        object.traverse(function (obj) {
+          if (obj instanceof THREE.Mesh) {
+            obj.receiveShadow = true;
+            obj.castShadow = true;
+            obj.geometry.computeVertexNormals();
+            objects.push(obj);
+          }
+        })
+      });
+    });
+
+    // BIGGER living light shade
+    mtlLoader.load("obj/bulb/bigger_lampshade.mtl", function (materials) {
+      materials.preload();
+      var objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load("obj/bulb/bigger_lampshade.obj", function (object) {
+        object.position.set(5, 15, -40);
+        object.scale.set(1, 1, 1);
         object.castShadow = true;
         object.name = "desk";
 
@@ -843,13 +900,15 @@
 
         scene.add(object);
 
-        var my_hanging_bulbs = [object.clone(), object.clone()]
+        var my_hanging_bulbs = [object.clone(), object.clone(), object.clone()]
         
         my_hanging_bulbs[0].position.set(-25, 18, 160); //garage_1
         my_hanging_bulbs[1].position.set(-25, 18, 185); //garage_2
+        my_hanging_bulbs[2].position.set(30, 18, 75); //kitchen_1
 
         for (var i = 0; i < my_hanging_bulbs.length; i++) {
           my_hanging_bulbs[i].name += [i];
+          console.log(my_hanging_bulbs[i].name);
           scene.add(my_hanging_bulbs[i]);
 
           my_hanging_bulbs[i].traverse(function (obj) {
