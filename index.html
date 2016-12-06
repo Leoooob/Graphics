@@ -63,13 +63,13 @@
   <script src="js/build/MTLLoader.js"></script>
   <script src="js/build/OBJLoader.js"></script>
 
-  <!--<script type="x-shader/x-vertex" id="vertexshader">
+  <script type="x-shader/x-vertex" id="vertexshader">
     attribute float size; attribute vec3 customColor; varying vec3 vColor; void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_PointSize = size * ( 300.0 / -mvPosition.z ); gl_Position = projectionMatrix * mvPosition; }
   </script>
 
   <script type="x-shader/x-fragment" id="fragmentshader">
     uniform vec3 color; uniform sampler2D texture; varying vec3 vColor; void main() { gl_FragColor = vec4( color * vColor, 1.0 ); gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); }
-  </script>-->
+  </script>
 </head>
 
 <body>
@@ -262,18 +262,19 @@
     document.addEventListener('keyup', onKeyUp, false);
 
     //fire particles
-    /*var particleSystem, uniforms;
-    var particles = 100;
-    var radius = 20;
+    var particleSystem, uniforms;
+    var particles = 50;
+    var radius = 3;
     
     uniforms = {
       color: {
-        value: new THREE.Color(0xff0000)
+        value: new THREE.Color(0xff0000)  //0xff6633 = orange, 0xE5E500 = yellow
       },
       texture: {
         value: new THREE.TextureLoader().load("tex/spark.png")
       }
     };
+    
     var shaderMaterial = new THREE.ShaderMaterial({
       uniforms: uniforms,
       vertexShader: document.getElementById('vertexshader').textContent,
@@ -288,6 +289,7 @@
     var colors = new Float32Array(particles * 3);
     var sizes = new Float32Array(particles);
     var color = new THREE.Color();
+    
     for (var i = 0, i3 = 0; i < particles; i++, i3 += 3) {
       positions[i3 + 0] = (Math.random() * 2 - 1) * radius;
       positions[i3 + 1] = (Math.random() * 2 - 1) * radius;
@@ -296,7 +298,7 @@
       colors[i3 + 0] = color.r;
       colors[i3 + 1] = color.g;
       colors[i3 + 2] = color.b;
-      sizes[i] = 20;
+      sizes[i] = 5;
     }
     
     geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -304,9 +306,9 @@
     geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
     particleSystem = new THREE.Points(geometry, shaderMaterial);
     
-    particleSystem.position.set(0, 0, 0);
+    particleSystem.position.set(25, 6, -92.5);
     
-    scene.add(particleSystem);*/
+    scene.add(particleSystem);
 
     //raycasting things
     var mouse_pos = new THREE.Vector2();
@@ -1068,18 +1070,6 @@
     //END OBJECTS
     ////////////////////////////////////////
 
-    /*// define a cube and add it to the scene
-    var cube_geo = new THREE.BoxGeometry(20, 20, 1);
-    var cube_mat = new THREE.MeshLambertMaterial({
-      color: 0xccffaa
-    });
-    var cube = new THREE.Mesh(cube_geo, cube_mat);
-    cube.rotation.x = (Math.PI * (90/180));
-    cube.position.set(-25, 0, 175);
-    objects.push(cube);
-
-    scene.add(cube);*/
-
     // re-initialise on window resize
     window.addEventListener('resize', onWindowResize, false);
 
@@ -1095,13 +1085,14 @@
       requestAnimationFrame(render);
       
       //fire stuff
-      /*var time = Date.now() * 0.005;
+      var time = Date.now() * 0.005;
       particleSystem.rotation.z = 0.01 * time;
       var sizes = geometry.attributes.size.array;
       for (var i = 0; i < particles; i++) {
-          sizes[i] = 10 * (1 + Math.sin(0.1 * i + time));
+          //sizes[i] = 10 * (1 + Math.sin(0.1 * i + time));
+          sizes[i] = (1 + Math.sin(0.1 * i + time));
       }
-      geometry.attributes.size.needsUpdate = true;*/
+      geometry.attributes.size.needsUpdate = true;
 
       if (controlsEnabled) {
         raycaster.ray.origin.copy(controls.getObject().position);
