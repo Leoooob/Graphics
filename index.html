@@ -1,60 +1,8 @@
 <html>
-
 <head>
   <title>CS32310 - Assignment</title>
-  <style>
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-    }
-    
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: arial;
-      background-color: #ffffff;
-    }
-    
-    #blocker {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-    
-    #instructions {
-      width: 100%;
-      height: 100%;
-      color: #ffffff;
-      cursor: pointer;
-      text-align: center;
-      display: -webkit-box;
-      display: -moz-box;
-      display: box;
-      -webkit-box-orient: horizontal;
-      -moz-box-orient: horizontal;
-      box-orient: horizontal;
-      -webkit-box-pack: center;
-      -moz-box-pack: center;
-      box-pack: center;
-      -webkit-box-align: center;
-      -moz-box-align: center;
-      box-align: center;
-    }
-    
-    canvas {
-      width: 100%;
-      height: 100%
-    }
-    
-    #vertexshader,
-    fragmentshader,
-    fragmentShaderDepth,
-    vertexShaderDepth {
-      display: none;
-    }
-  </style>
+  
+  <link rel="stylesheet" type="text/css" href="css/style.css">
 
   <script src="js/build/three.min.js"></script>
   <script src="js/build/PointerLockControls.js"></script>
@@ -62,26 +10,31 @@
   <script src="js/build/MTLLoader.js"></script>
   <script src="js/build/OBJLoader.js"></script>
   <script src="js/build/Cloth.js"></script>
-
+  
+  <!-- The remaining scripts are taken from Three.js examples and used for various particle effects -->
   <script type="x-shader/x-vertex" id="vertexshader"> attribute float size; attribute vec3 customColor; varying vec3 vColor; void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_PointSize = size * ( 300.0 / -mvPosition.z ); gl_Position = projectionMatrix * mvPosition; } </script>
   <script type="x-shader/x-fragment" id="fragmentshader"> uniform vec3 color; uniform sampler2D texture; varying vec3 vColor; void main() { gl_FragColor = vec4( color * vColor, 1.0 ); gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); } </script>
-  <script type="x-shader/x-fragment" id="fragmentShaderDepth"> #include
-    <packing> uniform sampler2D texture; varying vec2 vUV; void main() { vec4 pixel = texture2D( texture, vUV ); if ( pixel.a
-      < 0.5 ) discard; gl_FragData[ 0 ]=p ackDepthToRGBA( gl_FragCoord.z ); } </script>
-        <script type="x-shader/x-vertex" id="vertexShaderDepth"> varying vec2 vUV; void main() { vUV = 0.75 * uv; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_Position = projectionMatrix * mvPosition; }
-        </script>
+  <script type="x-shader/x-fragment" id="fragmentShaderDepth"> #include    <packing> uniform sampler2D texture; varying vec2 vUV; void main() { vec4 pixel = texture2D( texture, vUV ); if ( pixel.a < 0.5 ) discard; gl_FragData[ 0 ]=p ackDepthToRGBA( gl_FragCoord.z ); }
+  </script>
+  <script type="x-shader/x-vertex" id="vertexShaderDepth"> varying vec2 vUV; void main() { vUV = 0.75 * uv; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_Position = projectionMatrix * mvPosition; }
+  </script>
 </head>
 
 <body>
   <div id="blocker">
-    <div id="instructions"> <span style="font-size:40px">Click to view</span>
-      <br/> (W, A, S, D = Move, SPACE = Interact, MOUSE = Look around) </div>
+    <div id="instructions"> <span style="font-size:40px">Click to look around</span>
+      <br/> (W, A, S, D = Move, SPACE = Interact, MOUSE = Look around, ESC = pause) </div>
   </div>
   <script>
     var width = window.innerWidth;
     var height = window.innerHeight;
     var INTERACT = false;
     //pointerlock controls
+    /**
+     * PointerLock controls based largely on the Three.js
+     * example, taken from: https://threejs.org/examples/#misc_controls_pointerlock
+     * adapted by me, Leon Hassan - leh28
+     */
     var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
     if (havePointerLock) {
       var element = document.body;
@@ -217,6 +170,11 @@
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
     //fire particles
+    /**
+     * buffergeometry particles based largely on the Three.js
+     * example, taken from: https://threejs.org/examples/#webgl_buffergeometry_custom_attributes_particles
+     * adapted by me, Leon Hassan - leh28
+     */
     var particles = 50;
     var radius = 3;
     var uniforms = {
@@ -224,6 +182,7 @@
         value: new THREE.Color(0xff0000) //0xff6633 = orange, 0xE5E500 = yellow
       },
       texture: {
+        //texture taken from example, cited above
         value: new THREE.TextureLoader().load("tex/spark.png")
       }
     };
@@ -232,7 +191,7 @@
       vertexShader: document.getElementById('vertexshader').textContent,
       fragmentShader: document.getElementById('fragmentshader').textContent,
       blending: THREE.AdditiveBlending,
-      depthTest: false,
+      /*depthTest: false,*/
       transparent: true
     });
     geometry = new THREE.BufferGeometry();
@@ -257,6 +216,11 @@
     particleSystem.position.set(5, 7, -92.5);
     scene.add(particleSystem);
     //Raycaster
+    /**
+     * Raycasting based on the Three.js examples available at https://threejs.org/examples/
+     * and lectures at Aberystwyth University
+     * adapted by me, Leon Hassan - leh28
+     */
     var mouse_pos = new THREE.Vector2();
 
     function onMouseMove(event) {
@@ -363,11 +327,13 @@
     ////////////////////////////////
     var texture_loader = new THREE.TextureLoader();
     // ceiling texture
+    // open resource, found at: http://3.bp.blogspot.com/-Fbzkv8Omxtc/T2HY2QU0Q4I/AAAAAAAABQw/40kHbheH3Ek/s1600/Seamless+wall+plaster+%25284%2529.jpg
     var ceiling_texture = texture_loader.load('tex/ceiling.jpg');
     ceiling_texture.wrapS = THREE.RepeatWrapping;
     ceiling_texture.wrapT = THREE.RepeatWrapping;
     ceiling_texture.repeat.set(10, 10);
     // wooden floor texture
+    // open resource, found with table and chair object source files
     var wooden_floor_texture = texture_loader.load('tex/light-wood.jpg');
     wooden_floor_texture.wrapS = THREE.RepeatWrapping;
     wooden_floor_texture.wrapT = THREE.RepeatWrapping;
@@ -378,13 +344,16 @@
     wooden_floor_2_texture.wrapT = THREE.RepeatWrapping;
     wooden_floor_2_texture.repeat.set(5, 5);
     // granite floor texture
+    // open resource, found at: http://1.bp.blogspot.com/-Kn7M1W_Yh_k/U7FxDaDQRII/AAAAAAAAFbY/xqzejAoM94Y/s1600/(CONCRETE+16)+seamless+floor+granite+stones+texture.jpg
     var granite_floor_texture = texture_loader.load("tex/granite-stones.jpg");
     granite_floor_texture.wrapS = THREE.RepeatWrapping;
     granite_floor_texture.wrapT = THREE.RepeatWrapping;
     // plaster wall texture
+    // open resource, found on the module blackboard area, under assignment
     var plaster_wall_texture = texture_loader.load("tex/plaster.jpg");
     plaster_wall_texture.wrapS = THREE.RepeatWrapping;
     plaster_wall_texture.wrapT = THREE.RepeatWrapping;
+    // brick jpg was an open resource, found at: https://www.google.co.uk/url?sa=i&rct=j&q&esrc=s&source=images&cd&ved=0ahUKEwixvpnr99_QAhUCWxoKHS1zB3cQjBwIBA&url=http%3A%2F%2Fwww.cadhatch.com%2Fdownload%2Fi%2Fmark_dl%2Fu%2F4013003604%2F4618103753%2FBrick-2377.jpg&psig=AFQjCNH5Yx0FE9vHCBjwfscVl2o8v_-ugA&ust=1481126365155862
     // brick wall texture
     var brick_wall_texture = texture_loader.load("tex/bricks.jpg");
     brick_wall_texture.wrapS = THREE.RepeatWrapping;
@@ -609,10 +578,19 @@
         map: plaster_wall_texture
       })
     ]);
+    /* Shadows for some reason were not working in my project, even when
+     * compared to friends we could see nothing wrong with my setup for shadows.
+     * I spoke with Helen Miles and was told not to worry, it was a fault with
+     * Three.js and that it was a known issue
+     */
     ////////////////////////////////////////
     //wall 1 - front of house
     var wall_geo_1 = new THREE.BoxGeometry(0.1, wall_height, 60);
     var wall_1 = new THREE.Mesh(wall_geo_1, south_wall_materials);
+    /* I made the walls slightly taller than needed so that they would intersect the
+     * planes that made up the roof and floor, this was an attempt to stop light going
+     * under and over the walls
+     */
     wall_1.position.set(0, 10, 170);
     wall_1.castShadow = true;
     wall_1.recieveShadows = true;
@@ -717,11 +695,17 @@
     ////////////////////////////////////////
     //BEGIN DOORWAY CURTAIN
     ////////////////////////////////////////
+    /* My doorway curtain is based largely the Cloth example, available on the Three.js
+     * examples, found at: https://threejs.org/examples/#webgl_animation_cloth
+     * 
+     * adapted by me, Leon Hassan - leh28
+     */
     //the pins are what hold the curtain in place, the number of attaching points for the curtain
     var pinsFormation = [];
     var pins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     pinsFormation.push(pins);
     // cloth material
+    // texture jpg is an open resource, found at: https://vwartclub.com/media/learning/making-of-scandinavian-interior/21.jpg
     var clothTexture = texture_loader.load('tex/curtain.jpg');
     clothTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
     clothTexture.anisotropy = 16;
@@ -761,6 +745,7 @@
     ////////////////////////////////////////
     var mtlLoader = new THREE.MTLLoader();
     // lightswitch
+    // open resource, found at: http://tf3dm.com/3d-model/light-switch-22023.html
     mtlLoader.load("obj/lightswitch/lightswitch.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
@@ -838,6 +823,13 @@
         object.castShadow = true;
         object.name = "bulb";
         scene.add(object);
+        /* Instead of loading the material mutliple times, I load it once and
+         * then clone the material to produce multiple meshes from the same instance
+         * of the material.
+         * 
+         * I did this to cut down loading times with objects that were being used
+         * repeatedly.
+         */
         var my_hanging_bulbs = [object.clone(), object.clone(), object.clone()]
         my_hanging_bulbs[0].position.set(-25, 18, 160); //garage_1
         my_hanging_bulbs[1].position.set(-25, 18, 185); //garage_2
@@ -864,7 +856,6 @@
       objLoader.load("obj/sofa/sofa.obj", function (object) {
         object.position.set(-10, 0, -80);
         object.rotation.y = (Math.PI * (90 / 180));
-        //object.scale.set(1, 0.25, 0.25);
         object.castShadow = true;
         object.name = "sofa";
         scene.add(object);
@@ -902,6 +893,7 @@
       });
     });
     //dining room table
+    //open resource, taken from: http://archive3d.net/?a=download&id=a0e41e46
     mtlLoader.load("obj/table/table.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
@@ -923,6 +915,7 @@
       });
     });
     //dining room chair
+    //open resource, taken from: http://archive3d.net/?a=download&id=44514591
     mtlLoader.load("obj/chair/chair.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
@@ -956,9 +949,10 @@
     ////////////////////////////////////////
     //END OBJECTS
     ////////////////////////////////////////
-    // re-initialise on window resize
+    // add event listener for resizing the window
     window.addEventListener('resize', onWindowResize, false);
 
+    // re-initialise function, that is called on window resize
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -977,7 +971,10 @@
       }
       geometry.attributes.size.needsUpdate = true;
       // doorway curtain rendering
-      //windStrength is a linearly increasing constant which is used with a variety of wave functions and set as windForce, this will linearly increase the speed of the wind affecting the doorway curtain
+      /* windStrength is a linearly increasing constant which is used with a variety
+       * of wave functions and set as windForce, this will linearly increase the speed
+       * of the wind affecting the doorway curtain
+      */
       windStrength = Math.cos(time / 7000) * 20 + 40;
       windForce.set(Math.sin(time / 2000), Math.cos(time / 3000), Math.sin(time / 1000)).normalize().multiplyScalar(windStrength);
       simulate(time);
