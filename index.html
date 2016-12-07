@@ -83,6 +83,7 @@
   <script>
     var width = window.innerWidth;
     var height = window.innerHeight;
+    var INTERACT = false;
 
     //pointerlock controls
     var havePointerLock = 'pointerLockElement' in document ||
@@ -248,6 +249,7 @@
         break;
 
       case 32:
+        INTERACT = true;
         //trigger global interact switch
         break;
 
@@ -260,6 +262,17 @@
 
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
+    
+    function interact() {
+      raycaster.ray.origin.copy(controls.getObject().position);
+      raycaster.far = 25;
+      raycaster.setFromCamera(mouse_pos, camera);
+      var intersections = raycaster.intersectObjects(scene.children);
+      
+      for (var i = 0; i < intersections.length; i++) {
+        console.log(intersections[i]);
+      }
+    }
 
     //fire particles
     var particles = 50;
@@ -871,6 +884,32 @@
     ////////////////////////////////////////
     var mtlLoader = new THREE.MTLLoader();
 
+    // lightswitch
+    mtlLoader.load("obj/lightswitch/lightswitch.mtl", function (materials) {
+      materials.preload();
+      var objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load("obj/lightswitch/lightswitch.obj", function (object) {
+        object.position.set(-40, 10, 150);
+        object.rotation.x = (Math.PI * (270 / 180));
+        object.rotation.z = (Math.PI * (180 / 180));
+        object.scale.set(20, 20, 20);
+        object.castShadow = true;
+        object.name = "lightswitch";
+
+        scene.add(object);
+
+        object.traverse(function (obj) {
+          if (obj instanceof THREE.Mesh) {
+            obj.receiveShadow = true;
+            obj.castShadow = true;
+            obj.geometry.computeVertexNormals();
+            objects.push(obj);
+          }
+        })
+      });
+    });
+
     // fireplace
     mtlLoader.load("obj/fireplace/fireplace.mtl", function (materials) {
       materials.preload();
@@ -1088,7 +1127,6 @@
       particleSystem.rotation.z = 0.01 * time;
       var sizes = geometry.attributes.size.array;
       for (var i = 0; i < particles; i++) {
-          //sizes[i] = 10 * (1 + Math.sin(0.1 * i + time));
           sizes[i] = (1 + Math.sin(0.1 * i + time));
       }
       geometry.attributes.size.needsUpdate = true;
@@ -1105,10 +1143,16 @@
 
         for (var i = 0; i < bump_list.length; i++) {
           //console.log(bump_list[i]);
-          console.log('bumping something')
-            //bump_list[i].getObject().position.y = 5;
+          
+          if (bump_list[i].object.name.includes('switchbase')) {
+            if (INTERACT) {
+              garage_light_1.visible = garage_light_1.visible ? false : true
+              garage_light_2.visible = garage_light_2.visible ? false : true
+              INTERACT = false;
+            }
+          }
         }
-        //var isOnObject = bump_list.length > 0;
+        
         var time = performance.now();
         var delta = (time - prevTime) / 1000;
 
