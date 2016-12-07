@@ -936,30 +936,6 @@
     });
 
     // living light shade
-    mtlLoader.load("obj/bulb/lampshade.mtl", function (materials) {
-      materials.preload();
-      var objLoader = new THREE.OBJLoader();
-      objLoader.setMaterials(materials);
-      objLoader.load("obj/bulb/lampshade.obj", function (object) {
-        object.position.set(5, 15, -40);
-        object.scale.set(5, 5, 5);
-        object.castShadow = true;
-        object.name = "desk";
-
-        scene.add(object);
-
-        object.traverse(function (obj) {
-          if (obj instanceof THREE.Mesh) {
-            obj.receiveShadow = true;
-            obj.castShadow = true;
-            obj.geometry.computeVertexNormals();
-            objects.push(obj);
-          }
-        })
-      });
-    });
-
-    // BIGGER living light shade
     mtlLoader.load("obj/bulb/bigger_lampshade.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
@@ -1016,6 +992,31 @@
             }
           })
         }
+      });
+    });
+
+    //sofa
+    mtlLoader.load("obj/sofa/sofa.mtl", function (materials) {
+      materials.preload();
+      var objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load("obj/sofa/sofa.obj", function (object) {
+        object.position.set(-10, 0, -80);
+        object.rotation.y = (Math.PI * (90 / 180));
+        //object.scale.set(1, 0.25, 0.25);
+        object.castShadow = true;
+        object.name = "sofa";
+
+        scene.add(object);
+
+        object.traverse(function (obj) {
+          if (obj instanceof THREE.Mesh) {
+            obj.receiveShadow = true;
+            obj.castShadow = true;
+            obj.geometry.computeVertexNormals();
+            objects.push(obj);
+          }
+        })
       });
     });
 

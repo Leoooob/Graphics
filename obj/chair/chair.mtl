@@ -12,10 +12,10 @@ newmtl seat
 	Kd 0.7294 0.4078 0.1373
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka http://i.imgur.com/UpAIl2K.jpg
-	map_Kd http://i.imgur.com/UpAIl2K.jpg
-	map_bump http://i.imgur.com/UpAIl2K.jpg
-	bump http://i.imgur.com/UpAIl2K.jpg
+	map_Ka maps\Berber.jpg
+	map_Kd maps\Berber.jpg
+	map_bump maps\Berber.jpg
+	bump maps\Berber.jpg
 
 newmtl box
 	Ns 10.0000
@@ -28,7 +28,7 @@ newmtl box
 	Kd 0.7922 0.6745 0.3098
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka http://i.imgur.com/EsVe4WW.jpg
-	map_Kd http://i.imgur.com/EsVe4WW.jpg
-	map_bump http://i.imgur.com/EsVe4WW.jpg
-	bump http://i.imgur.com/EsVe4WW.jpg
+	map_Ka maps\Wood.jpg
+	map_Kd maps\Wood.jpg
+	map_bump maps\Wood.jpg
+	bump maps\Wood.jpg

@@ -12,10 +12,10 @@ newmtl box
 	Kd 0.7922 0.6745 0.3098
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka http://i.imgur.com/EsVe4WW.jpg
-	map_Kd http://i.imgur.com/EsVe4WW.jpg
-	map_bump http://i.imgur.com/EsVe4WW.jpg
-	bump http://i.imgur.com/EsVe4WW.jpg
+	map_Ka maps\Wood.jpg
+	map_Kd maps\Wood.jpg
+	map_bump maps\Wood.jpg
+	bump maps\Wood.jpg
 
 newmtl Clear_window
 	Ns 10.0000
