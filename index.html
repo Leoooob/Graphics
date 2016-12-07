@@ -753,7 +753,8 @@
     pinsFormation.push(pins);
 
     // cloth material
-    var clothTexture = texture_loader.load('tex/cloth.png');
+    //var clothTexture = texture_loader.load('tex/cloth.png');
+    var clothTexture = texture_loader.load('tex/curtain.jpg');
     clothTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
     clothTexture.anisotropy = 16;
     var clothMaterial = new THREE.MeshPhongMaterial({
@@ -776,8 +777,8 @@
 
     // cloth mesh
     object = new THREE.Mesh(clothGeometry, clothMaterial);
-    object.position.set(-35, 6, 15);
-    object.scale.set(0.1, 0.1, 0.1);
+    object.position.set(-35, 7, 15);
+    object.scale.set(0.1, 0.1, 0.01);
     object.castShadow = true;
     scene.add(object);
     object.customDepthMaterial = new THREE.ShaderMaterial({
@@ -1010,6 +1011,7 @@
       // cloth stuff
       windStrength = Math.cos(time / 7000) * 20 + 40;
       windForce.set(Math.sin(time / 2000), Math.cos(time / 3000), Math.sin(time / 1000)).normalize().multiplyScalar(windStrength);
+      //console.log('wind strength: ' + windStrength);
       simulate(time);
       //more cloth stuff
       var p = cloth.particles;
