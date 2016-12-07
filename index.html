@@ -157,8 +157,10 @@
     var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     //add controls
     var controls = new THREE.PointerLockControls(camera);
-    controls.getObject().position.set(5, 5, 5);
-    //key-push listeners 
+    //spawn outside front door, facing the door
+    controls.getObject().position.set(10, 5, 130);
+    controls.getObject().rotation.y = (Math.PI * (90 / 180));
+    //key listeners 
     var onKeyDown = function (event) {
       switch (event.keyCode) {
       case 38: // up
@@ -178,12 +180,8 @@
         moveRight = true;
         break;
       case 32: // space
-        // interact with doors and shit
-        // global interact variable switch?
         break;
       case 27: // esc
-        //stop controls
-        controlsEnabled = false;
         break;
       }
     };
@@ -215,18 +213,9 @@
         break;
       }
     };
+    //add listeners so we can capture keypress events
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-
-    function interact() {
-      raycaster.ray.origin.copy(controls.getObject().position);
-      raycaster.far = 25;
-      raycaster.setFromCamera(mouse_pos, camera);
-      var intersections = raycaster.intersectObjects(scene.children);
-      for (var i = 0; i < intersections.length; i++) {
-        console.log(intersections[i]);
-      }
-    }
     //fire particles
     var particles = 50;
     var radius = 3;
@@ -265,9 +254,9 @@
     geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
     geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
     var particleSystem = new THREE.Points(geometry, shaderMaterial);
-    particleSystem.position.set(5, 6, -92.5);
+    particleSystem.position.set(5, 7, -92.5);
     scene.add(particleSystem);
-    //raycasting things
+    //Raycaster
     var mouse_pos = new THREE.Vector2();
 
     function onMouseMove(event) {
@@ -275,11 +264,10 @@
       mouse_pos.y = -(event.clientY / window.innerHeight) * 2 + 1;
     }
     var raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 10);
-    //scene.add(camera);
     scene.add(controls.getObject());
     ////////////////////////////////
     //ambient light
-    var ambient_light = new THREE.AmbientLight(0xffffff, 1);
+    //var ambient_light = new THREE.AmbientLight(0xffffff, 1);
     //
     //scene.add(ambient_light);
     ////////////////////////////////
@@ -304,26 +292,6 @@
     garage_light_2.castShadow = true;
     garage_light_2.target.updateMatrixWorld();
     scene.add(garage_light_2);
-    var wait_time;
-    var my_flicker_timer;
-
-    function flicker_garage_light() {
-      console.log('flicker_garage_light is called')
-      if (my_flicker_timer) {
-        console.log('already waiting for a flicker')
-      } else {
-        console.log('starting a flicker')
-        if (garage_light_2.visible) {
-          garage_light_2.visible = false;
-        } else {
-          garage_light_2.visible = true;
-        }
-        //console.log(garage_light_2.visible);
-        wait_time = (Math.random() * (5 - 2) + 2) * 1000;
-        console.log(wait_time);
-        my_flicker_timer = setTimeout(flicker_garage_light(), wait_time);
-      }
-    }
     //var garage_light_2_helper = new THREE.SpotLightHelper(garage_light_2);
     //garage_light_2_helper.update();
     //scene.add(garage_light_2_helper);
@@ -528,19 +496,19 @@
     scene.add(garage_floor);
     scene.add(garage_roof);
     scene.add(garden_floor_1);
-    //scene.add(garden_floor_2)
     ////////////////////////////////
     //END PLANES
     ////////////////////////////////
     ////////////////////////////////////////
     //BEGIN WALLS
     ////////////////////////////////////////
+    //set up wall constants
     var wall_height = 25;
     var wall_mat = new THREE.MeshPhongMaterial({
-      //color: 0xf5f5dc,
       map: plaster_wall_texture,
       transparent: false
     });
+    //set up arrays of materials so that I can place different textures on the inner and outer faces
     var north_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
@@ -641,8 +609,9 @@
         map: plaster_wall_texture
       })
     ]);
+    ////////////////////////////////////////
     //wall 1 - front of house
-    var wall_geo_1 = new THREE.BoxGeometry(0.1, wall_height, 60); //depth, height, width
+    var wall_geo_1 = new THREE.BoxGeometry(0.1, wall_height, 60);
     var wall_1 = new THREE.Mesh(wall_geo_1, south_wall_materials);
     wall_1.position.set(0, 10, 170);
     wall_1.castShadow = true;
@@ -745,15 +714,14 @@
     ////////////////////////////////////////
     //END OF WALLS
     ////////////////////////////////////////
-    //////
-    //cloth stuff
-    //////
+    ////////////////////////////////////////
+    //BEGIN DOORWAY CURTAIN
+    ////////////////////////////////////////
+    //the pins are what hold the curtain in place, the number of attaching points for the curtain
     var pinsFormation = [];
     var pins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     pinsFormation.push(pins);
-
     // cloth material
-    //var clothTexture = texture_loader.load('tex/cloth.png');
     var clothTexture = texture_loader.load('tex/curtain.jpg');
     clothTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
     clothTexture.anisotropy = 16;
@@ -763,7 +731,6 @@
       side: THREE.DoubleSide,
       alphaTest: 0.5
     });
-
     // cloth geometry
     clothGeometry = new THREE.ParametricGeometry(clothFunction, cloth.w, cloth.h);
     clothGeometry.dynamic = true;
@@ -774,7 +741,6 @@
     };
     var vertexShader = document.getElementById('vertexShaderDepth').textContent;
     var fragmentShader = document.getElementById('fragmentShaderDepth').textContent;
-
     // cloth mesh
     object = new THREE.Mesh(clothGeometry, clothMaterial);
     object.position.set(-35, 7, 15);
@@ -787,7 +753,9 @@
       fragmentShader: fragmentShader,
       side: THREE.DoubleSide
     });
-
+    ////////////////////////////////////////
+    //END DOORWAY CURTAIN
+    ////////////////////////////////////////
     ////////////////////////////////////////
     //BEGIN OBJECTS
     ////////////////////////////////////////
@@ -1001,19 +969,19 @@
       renderer.render(scene, camera);
       requestAnimationFrame(render);
       var time = Date.now();
-      //fire stuff
+      //fire rendering
       particleSystem.rotation.z = 0.01 * (time * 0.005);
       var sizes = geometry.attributes.size.array;
       for (var i = 0; i < particles; i++) {
         sizes[i] = (1 + Math.sin(0.1 * i + (time * 0.005)));
       }
       geometry.attributes.size.needsUpdate = true;
-      // cloth stuff
+      // doorway curtain rendering
+      //windStrength is a linearly increasing constant which is used with a variety of wave functions and set as windForce, this will linearly increase the speed of the wind affecting the doorway curtain
       windStrength = Math.cos(time / 7000) * 20 + 40;
       windForce.set(Math.sin(time / 2000), Math.cos(time / 3000), Math.sin(time / 1000)).normalize().multiplyScalar(windStrength);
-      //console.log('wind strength: ' + windStrength);
       simulate(time);
-      //more cloth stuff
+      //using Cloth.js functions to accurately model particles for the doorway curtain
       var p = cloth.particles;
       for (var i = 0, il = p.length; i < il; i++) {
         clothGeometry.vertices[i].copy(p[i].position);
@@ -1023,6 +991,7 @@
       clothGeometry.normalsNeedUpdate = true;
       clothGeometry.verticesNeedUpdate = true;
       if (controlsEnabled) {
+        //if controls are enabled we are in-focus
         raycaster.ray.origin.copy(controls.getObject().position);
         raycaster.ray.origin.y -= 10;
         raycaster.ray.direction.set(controls.getObject().rotation.y);
@@ -1030,9 +999,11 @@
         var bump_list = [];
         bump_list = raycaster.intersectObjects(objects);
         for (var i = 0; i < bump_list.length; i++) {
-          //console.log(bump_list[i]);
+          //if we are in-range of an object it is added to the bump_list
           if (bump_list[i].object.name.includes('switchbase')) {
+            //if the list contains something that we have interaction with, filtering by object name
             if (INTERACT) {
+              //if we are trying to interact with something, we will flip the visibility of each garage light and then reset the INTERACT var
               garage_light_1.visible = garage_light_1.visible ? false : true
               garage_light_2.visible = garage_light_2.visible ? false : true
               INTERACT = false;
@@ -1060,10 +1031,6 @@
       renderer.render(scene, camera);
     }
     render();
-    //start garage_light_2 flicker
-    //can't use setInterval with a variable for time
-    //console.log("i am calling setTimeout on flicker_garage_light")
-    //setTimeout(flicker_garage_light, wait_time);
   </script>
 </body>
 
