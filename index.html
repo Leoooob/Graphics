@@ -3,44 +3,44 @@
 <head>
   <title>CS32310 - Assignment</title>
   <style>
-    html, 
-    body { 
-      width: 100%; 
-      height: 100%; 
-    } 
-     
-    body { 
-      margin: 0; 
-      overflow: hidden; 
-      font-family: arial; 
-      background-color: #ffffff; 
-    } 
-     
-    #blocker { 
-      width: 100%; 
-      height: 100%; 
-      position: absolute; 
-      background-color: rgba(0, 0, 0, 0.5); 
-    } 
-     
-    #instructions { 
-      width: 100%; 
-      height: 100%; 
-      color: #ffffff; 
-      cursor: pointer; 
-      text-align: center; 
-      display: -webkit-box; 
-      display: -moz-box; 
-      display: box; 
-      -webkit-box-orient: horizontal; 
-      -moz-box-orient: horizontal; 
-      box-orient: horizontal; 
-      -webkit-box-pack: center; 
-      -moz-box-pack: center; 
-      box-pack: center; 
-      -webkit-box-align: center; 
-      -moz-box-align: center; 
-      box-align: center; 
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+    
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: arial;
+      background-color: #ffffff;
+    }
+    
+    #blocker {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    #instructions {
+      width: 100%;
+      height: 100%;
+      color: #ffffff;
+      cursor: pointer;
+      text-align: center;
+      display: -webkit-box;
+      display: -moz-box;
+      display: box;
+      -webkit-box-orient: horizontal;
+      -moz-box-orient: horizontal;
+      box-orient: horizontal;
+      -webkit-box-pack: center;
+      -moz-box-pack: center;
+      box-pack: center;
+      -webkit-box-align: center;
+      -moz-box-align: center;
+      box-align: center;
     }
     
     canvas {
@@ -48,11 +48,10 @@
       height: 100%
     }
     
-    #vertexshader {
-      display: none;
-    }
-    
-    #fragmentshader {
+    #vertexshader,
+    fragmentshader,
+    fragmentShaderDepth,
+    vertexShaderDepth {
       display: none;
     }
   </style>
@@ -62,135 +61,103 @@
   <script src="js/build/DDSLoader.js"></script>
   <script src="js/build/MTLLoader.js"></script>
   <script src="js/build/OBJLoader.js"></script>
+  <script src="js/build/Cloth.js"></script>
 
-  <script type="x-shader/x-vertex" id="vertexshader">
-    attribute float size; attribute vec3 customColor; varying vec3 vColor; void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_PointSize = size * ( 300.0 / -mvPosition.z ); gl_Position = projectionMatrix * mvPosition; }
-  </script>
-
-  <script type="x-shader/x-fragment" id="fragmentshader">
-    uniform vec3 color; uniform sampler2D texture; varying vec3 vColor; void main() { gl_FragColor = vec4( color * vColor, 1.0 ); gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); }
-  </script>
+  <script type="x-shader/x-vertex" id="vertexshader"> attribute float size; attribute vec3 customColor; varying vec3 vColor; void main() { vColor = customColor; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_PointSize = size * ( 300.0 / -mvPosition.z ); gl_Position = projectionMatrix * mvPosition; } </script>
+  <script type="x-shader/x-fragment" id="fragmentshader"> uniform vec3 color; uniform sampler2D texture; varying vec3 vColor; void main() { gl_FragColor = vec4( color * vColor, 1.0 ); gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord ); } </script>
+  <script type="x-shader/x-fragment" id="fragmentShaderDepth"> #include
+    <packing> uniform sampler2D texture; varying vec2 vUV; void main() { vec4 pixel = texture2D( texture, vUV ); if ( pixel.a
+      < 0.5 ) discard; gl_FragData[ 0 ]=p ackDepthToRGBA( gl_FragCoord.z ); } </script>
+        <script type="x-shader/x-vertex" id="vertexShaderDepth"> varying vec2 vUV; void main() { vUV = 0.75 * uv; vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 ); gl_Position = projectionMatrix * mvPosition; }
+        </script>
 </head>
 
 <body>
   <div id="blocker">
-    <div id="instructions">
-      <span style="font-size:40px">Click to view</span>
-      <br/> (W, A, S, D = Move, SPACE = Interact, MOUSE = Look around)
-    </div>
+    <div id="instructions"> <span style="font-size:40px">Click to view</span>
+      <br/> (W, A, S, D = Move, SPACE = Interact, MOUSE = Look around) </div>
   </div>
-
   <script>
     var width = window.innerWidth;
     var height = window.innerHeight;
     var INTERACT = false;
-
     //pointerlock controls
-    var havePointerLock = 'pointerLockElement' in document ||
-      'mozPointerLockElement' in document ||
-      'webkitPointerLockElement' in document;
-
+    var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
     if (havePointerLock) {
       var element = document.body;
       var pointerlockchange = function (event) {
         if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
           controlsEnabled = true;
           controls.enabled = true;
-
           blocker.style.display = 'none';
         } else {
           controls.enabled = false;
-
           blocker.style.display = '-webkit-box';
           blocker.style.display = '-moz-box';
           blocker.style.display = 'box';
-
           instructions.style.display = '';
         }
-
       };
-
       var pointerlockerror = function (event) {
         instructions.style.display = '';
       };
-
       // Hook pointer lock state change events
       document.addEventListener('pointerlockchange', pointerlockchange, false);
       document.addEventListener('mozpointerlockchange', pointerlockchange, false);
       document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-
       document.addEventListener('pointerlockerror', pointerlockerror, false);
       document.addEventListener('mozpointerlockerror', pointerlockerror, false);
       document.addEventListener('webkitpointerlockerror', pointerlockerror, false);
-
       instructions.addEventListener('click', function (event) {
         instructions.style.display = 'none';
-
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-
         if (/Firefox/i.test(navigator.userAgent)) {
           var fullscreenchange = function (event) {
             if (document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element) {
               document.removeEventListener('fullscreenchange', fullscreenchange);
               document.removeEventListener('mozfullscreenchange', fullscreenchange);
-
               element.requestPointerLock();
             }
           };
-
           document.addEventListener('fullscreenchange', fullscreenchange, false);
           document.addEventListener('mozfullscreenchange', fullscreenchange, false);
-
           element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
           element.requestFullscreen();
         } else {
           element.requestPointerLock();
         }
-
       }, false);
-
     } else {
       instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
     }
-
     var moveLeft = false;
     var moveRight = false;
     var moveForward = false;
     var moveBackward = false;
     var controlsEnabled = false;
-
     var objects = [];
-
     var prevTime = performance.now();
     var velocity = new THREE.Vector3();
-
     document.addEventListener("mousemove", this.moveCallback, false);
-
     var renderer = new THREE.WebGLRenderer({
       antialias: true
     });
-
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.shadowMapSoft = false;
     document.body.appendChild(renderer.domElement);
-
     // define the scene 			
     var scene = new THREE.Scene();
-
     //Add an axis to center of the screen
     var axis = new THREE.AxisHelper(10);
     scene.add(axis);
-
     // define the camera from which the scene will be rendered and seen
     var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-
     //add controls
     var controls = new THREE.PointerLockControls(camera);
     controls.getObject().position.set(5, 5, 5);
-
     //key-push listeners 
     var onKeyDown = function (event) {
       switch (event.keyCode) {
@@ -198,95 +165,79 @@
       case 87: // w
         moveForward = true;
         break;
-
       case 37: // left
       case 65: // a
         moveLeft = true;
         break;
-
       case 40: // down
       case 83: // s
         moveBackward = true;
         break;
-
       case 39: // right
       case 68: // d
         moveRight = true;
         break;
-
       case 32: // space
         // interact with doors and shit
         // global interact variable switch?
         break;
-
       case 27: // esc
         //stop controls
         controlsEnabled = false;
         break;
       }
     };
-
     var onKeyUp = function (event) {
       switch (event.keyCode) {
       case 38: // up
       case 87: // w
         moveForward = false;
         break;
-
       case 37: // left
       case 65: // a
         moveLeft = false;
         break;
-
       case 40: // down
       case 83: // s
         moveBackward = false;
         break;
-
       case 39: // right
       case 68: // d
         moveRight = false;
         break;
-
       case 32:
         INTERACT = true;
         //trigger global interact switch
         break;
-
       case 27: // esc
         //stop controls
         controlsEnabled = false;
         break;
       }
     };
-
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-    
+
     function interact() {
       raycaster.ray.origin.copy(controls.getObject().position);
       raycaster.far = 25;
       raycaster.setFromCamera(mouse_pos, camera);
       var intersections = raycaster.intersectObjects(scene.children);
-      
       for (var i = 0; i < intersections.length; i++) {
         console.log(intersections[i]);
       }
     }
-
     //fire particles
     var particles = 50;
     var radius = 3;
-    
     var uniforms = {
       color: {
-        value: new THREE.Color(0xff0000)  //0xff6633 = orange, 0xE5E500 = yellow
+        value: new THREE.Color(0xff0000) //0xff6633 = orange, 0xE5E500 = yellow
       },
       texture: {
         value: new THREE.TextureLoader().load("tex/spark.png")
       }
     };
-    
     var shaderMaterial = new THREE.ShaderMaterial({
       uniforms: uniforms,
       vertexShader: document.getElementById('vertexshader').textContent,
@@ -295,13 +246,11 @@
       depthTest: false,
       transparent: true
     });
-    
     geometry = new THREE.BufferGeometry();
     var positions = new Float32Array(particles * 3);
     var colors = new Float32Array(particles * 3);
     var sizes = new Float32Array(particles);
     var color = new THREE.Color();
-    
     for (var i = 0, i3 = 0; i < particles; i++, i3 += 3) {
       positions[i3 + 0] = (Math.random() * 2 - 1) * radius;
       positions[i3 + 1] = (Math.random() * 2 - 1) * radius;
@@ -312,16 +261,12 @@
       colors[i3 + 2] = color.b;
       sizes[i] = 5;
     }
-    
     geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
     geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
     var particleSystem = new THREE.Points(geometry, shaderMaterial);
-    
-    particleSystem.position.set(25, 6, -92.5);
-    
+    particleSystem.position.set(5, 6, -92.5);
     scene.add(particleSystem);
-
     //raycasting things
     var mouse_pos = new THREE.Vector2();
 
@@ -329,12 +274,9 @@
       mouse_pos.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse_pos.y = -(event.clientY / window.innerHeight) * 2 + 1;
     }
-
     var raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 10);
-
     //scene.add(camera);
     scene.add(controls.getObject());
-
     ////////////////////////////////
     //ambient light
     var ambient_light = new THREE.AmbientLight(0xffffff, 1);
@@ -351,10 +293,8 @@
     garage_light_1.castShadow = true;
     garage_light_1.target.updateMatrixWorld();
     scene.add(garage_light_1);
-
     //var garage_light_1_helper = new THREE.SpotLightHelper(garage_light_1);
     //scene.add(garage_light_1_helper);
-
     ////////////////////////////////
     //garage_light_2
     var garage_light_2 = new THREE.SpotLight(0xffee88, 1, 25, 1);
@@ -364,7 +304,6 @@
     garage_light_2.castShadow = true;
     garage_light_2.target.updateMatrixWorld();
     scene.add(garage_light_2);
-
     var wait_time;
     var my_flicker_timer;
 
@@ -380,17 +319,14 @@
           garage_light_2.visible = true;
         }
         //console.log(garage_light_2.visible);
-
         wait_time = (Math.random() * (5 - 2) + 2) * 1000;
         console.log(wait_time);
         my_flicker_timer = setTimeout(flicker_garage_light(), wait_time);
       }
     }
-
     //var garage_light_2_helper = new THREE.SpotLightHelper(garage_light_2);
     //garage_light_2_helper.update();
     //scene.add(garage_light_2_helper);
-
     ////////////////////////////////
     //dining_light_1 - kitchen wall
     var dining_light_1 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5); //SpotLight( color, intensity, distance, angle, penumbra, decay )
@@ -398,15 +334,11 @@
     dining_light_1.target.position.set(-15, 10, 75);
     dining_light_1.castShadow = true;
     dining_light_1.target.updateMatrixWorld();
-
     dining_light_1.shadow.camera.near = 5;
     dining_light_1.shadow.camera.far = 200;
-
     scene.add(dining_light_1);
-
     //var dining_light_1_helper = new THREE.SpotLightHelper(dining_light_1);
     //scene.add(dining_light_1_helper);
-
     ////////////////////////////////
     //dining_light_2 - garage
     var dining_light_2 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
@@ -414,16 +346,11 @@
     dining_light_2.target.position.set(-25, 0, 85);
     dining_light_2.castShadow = true;
     dining_light_2.target.updateMatrixWorld();
-
     dining_light_2.shadow.camera.near = 5;
     dining_light_2.shadow.camera.far = 200;
-
-
     scene.add(dining_light_2);
-
     //var dining_light_2_helper = new THREE.SpotLightHelper(dining_light_2);
     //scene.add(dining_light_2_helper);
-
     ////////////////////////////////
     //dining_light_3 - back of house wall
     var dining_light_3 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
@@ -432,10 +359,8 @@
     dining_light_3.castShadow = true;
     dining_light_3.target.updateMatrixWorld();
     scene.add(dining_light_3);
-
     //var dining_light_3_helper = new THREE.SpotLightHelper(dining_light_3);
     //scene.add(dining_light_3_helper);
-
     ////////////////////////////////
     //dining_light_4 - living room
     var dining_light_4 = new THREE.SpotLight(0xffffff, 1, 30, 0.9, 0.5);
@@ -444,122 +369,99 @@
     dining_light_4.castShadow = true;
     dining_light_4.target.updateMatrixWorld();
     scene.add(dining_light_4);
-
     //var dining_light_4_helper = new THREE.SpotLightHelper(dining_light_4);
     //scene.add(dining_light_4_helper);
-
     ////////////////////////////////
     //kitchen_light_1
     var kitchen_light_1 = new THREE.PointLight(0xffffff, 0.75);
     kitchen_light_1.position.set(30, 16, 75);
     kitchen_light_1.castShadow = true;
     scene.add(kitchen_light_1);
-
     //var kitchen_light_1_helper = new THREE.PointLightHelper(kitchen_light_1);
     //scene.add(kitchen_light_1_helper);
-
     ////////////////////////////////
     //living_light_1
     var living_light_1 = new THREE.PointLight(0xffffff, 2, 100, 2);
     living_light_1.position.set(5, 16, -40);
     living_light_1.castShadow = true;
     scene.add(living_light_1);
-
     //var living_light_1_helper = new THREE.PointLightHelper(living_light_1);
     //scene.add(living_light_1_helper);
-
     ////////////////////////////////
     //END OF LIGHTING
     ////////////////////////////////
-
     ////////////////////////////////
     //BEGIN TEXTURES
     ////////////////////////////////
     var texture_loader = new THREE.TextureLoader();
-
     // ceiling texture
     var ceiling_texture = texture_loader.load('tex/ceiling.jpg');
     ceiling_texture.wrapS = THREE.RepeatWrapping;
     ceiling_texture.wrapT = THREE.RepeatWrapping;
     ceiling_texture.repeat.set(10, 10);
-
     // wooden floor texture
     var wooden_floor_texture = texture_loader.load('tex/light-wood.jpg');
     wooden_floor_texture.wrapS = THREE.RepeatWrapping;
     wooden_floor_texture.wrapT = THREE.RepeatWrapping;
     wooden_floor_texture.repeat.set(15, 15);
-
     // wooden floor (doorway) texture
     var wooden_floor_2_texture = texture_loader.load('tex/light-wood.jpg');
     wooden_floor_2_texture.wrapS = THREE.RepeatWrapping;
     wooden_floor_2_texture.wrapT = THREE.RepeatWrapping;
     wooden_floor_2_texture.repeat.set(5, 5);
-
     // granite floor texture
     var granite_floor_texture = texture_loader.load("tex/granite-stones.jpg");
     granite_floor_texture.wrapS = THREE.RepeatWrapping;
     granite_floor_texture.wrapT = THREE.RepeatWrapping;
-
     // plaster wall texture
     var plaster_wall_texture = texture_loader.load("tex/plaster.jpg");
     plaster_wall_texture.wrapS = THREE.RepeatWrapping;
     plaster_wall_texture.wrapT = THREE.RepeatWrapping;
-
     // brick wall texture
     var brick_wall_texture = texture_loader.load("tex/bricks.jpg");
     brick_wall_texture.wrapS = THREE.RepeatWrapping;
     brick_wall_texture.wrapT = THREE.RepeatWrapping;
     brick_wall_texture.repeat.set(15, 2);
-
     // long brick wall texture
     var long_brick_wall_texture = texture_loader.load("tex/bricks.jpg");
     long_brick_wall_texture.wrapS = THREE.RepeatWrapping;
     long_brick_wall_texture.wrapT = THREE.RepeatWrapping;
     long_brick_wall_texture.repeat.set(12, 2);
-
     // med brick wall texture
     var med_brick_wall_texture = texture_loader.load("tex/bricks.jpg");
     med_brick_wall_texture.wrapS = THREE.RepeatWrapping;
     med_brick_wall_texture.wrapT = THREE.RepeatWrapping;
     med_brick_wall_texture.repeat.set(5, 2);
-
     // thin brick wall texture
     var thin_brick_wall_texture = texture_loader.load("tex/bricks.jpg");
     thin_brick_wall_texture.wrapS = THREE.RepeatWrapping;
     thin_brick_wall_texture.wrapT = THREE.RepeatWrapping;
     thin_brick_wall_texture.repeat.set(2, 2);
-
     ////////////////////////////////
     //END TEXTURES
     ////////////////////////////////
-
     ////////////////////////////////
     //BEGIN PLANES
     ////////////////////////////////
-
     // main floor plane
     var plane_geo = new THREE.PlaneGeometry(100, 200, 0);
     var plane_mat = new THREE.MeshPhongMaterial({
       map: wooden_floor_texture,
       side: THREE.DoubleSide
     });
-
     var main_floor = new THREE.Mesh(plane_geo, plane_mat);
     main_floor.rotation.x = (Math.PI * (90 / 180));
     main_floor.recieveShadows = true;
-
     // main roof
     var roof_geo = new THREE.PlaneGeometry(100, 200, 0);
     var roof_mat = new THREE.MeshPhongMaterial({
       map: ceiling_texture,
       side: THREE.DoubleSide
     });
-
     var main_roof = new THREE.Mesh(roof_geo, roof_mat);
     main_roof.rotation.x = (Math.PI * (90 / 180));
     main_roof.position.set(0, 20, 0);
     main_roof.recieveShadows = true;
-
     ////////////////////////////////
     // house entrance plane
     var plane_geo_2 = new THREE.PlaneGeometry(50, 50, 0);
@@ -567,26 +469,22 @@
       map: wooden_floor_2_texture,
       side: THREE.DoubleSide
     });
-
     var porch_floor = new THREE.Mesh(plane_geo_2, plane_mat_2);
     porch_floor.rotation.x = (Math.PI * (90 / 180));
     //porch_floor.rotation.z = (Math.PI * (90 / 180));
     porch_floor.position.set(-25, 0, 125);
     porch_floor.recieveShadows = true;
-
     // house entrance roof
     var roof_geo_2 = new THREE.PlaneGeometry(50, 50, 0);
     var roof_mat_2 = new THREE.MeshPhongMaterial({
       map: ceiling_texture,
       side: THREE.DoubleSide
     });
-
     var porch_roof = new THREE.Mesh(roof_geo_2, roof_mat_2);
     porch_roof.rotation.x = (Math.PI * (90 / 180));
     porch_roof.rotation.z = (Math.PI * (90 / 180));
     porch_roof.position.set(-25, 20, 125);
     porch_roof.recieveShadows = true;
-
     ////////////////////////////////
     // garage plane
     var plane_geo_3 = new THREE.PlaneGeometry(50, 50, 0);
@@ -594,26 +492,22 @@
       map: granite_floor_texture,
       side: THREE.DoubleSide
     });
-
     var garage_floor = new THREE.Mesh(plane_geo_3, plane_mat_3);
     garage_floor.rotation.x = (Math.PI * (90 / 180));
     garage_floor.rotation.z = (Math.PI * (90 / 180));
     garage_floor.position.set(-25, 0, 175);
     garage_floor.recieveShadows = true;
-
     // garage plane
     var roof_geo_3 = new THREE.PlaneGeometry(50, 50, 0);
     var roof_mat_3 = new THREE.MeshPhongMaterial({
       color: 0x0000ff,
       side: THREE.DoubleSide
     });
-
     var garage_roof = new THREE.Mesh(roof_geo_3, roof_mat_3);
     garage_roof.rotation.x = (Math.PI * (90 / 180));
     garage_roof.rotation.z = (Math.PI * (90 / 180));
     garage_roof.position.set(-25, 20, 175);
     garage_roof.recieveShadows = true;
-
     ////////////////////////////////
     // garden patio plane
     var plane_geo_4 = new THREE.PlaneGeometry(50, 100, 0);
@@ -621,13 +515,11 @@
       color: 0x00ff00,
       side: THREE.DoubleSide
     });
-
     var garden_floor_1 = new THREE.Mesh(plane_geo_4, plane_mat_4);
     garden_floor_1.rotation.x = (Math.PI * (90 / 180));
     garden_floor_1.rotation.z = (Math.PI * (90 / 180));
     garden_floor_1.position.set(0, 0, -125);
     garden_floor_1.recieveShadows = true;
-
     //add all planes to the scene
     scene.add(main_floor);
     scene.add(main_roof);
@@ -637,11 +529,9 @@
     scene.add(garage_roof);
     scene.add(garden_floor_1);
     //scene.add(garden_floor_2)
-
     ////////////////////////////////
     //END PLANES
     ////////////////////////////////
-
     ////////////////////////////////////////
     //BEGIN WALLS
     ////////////////////////////////////////
@@ -651,112 +541,106 @@
       map: plaster_wall_texture,
       transparent: false
     });
-
     var north_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: brick_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
       })
     ]);
-
     var south_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: med_brick_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
       })
     ]);
-
     var wide_south_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: long_brick_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
       })
     ]);
-
     var thin_south_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: thin_brick_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
       })
     ]);
-
     var west_wall_materials = new THREE.MeshFaceMaterial([
       new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: med_brick_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
-      }),
-      new THREE.MeshPhongMaterial({
+      })
+      , new THREE.MeshPhongMaterial({
         map: plaster_wall_texture
       })
     ]);
-
     //wall 1 - front of house
     var wall_geo_1 = new THREE.BoxGeometry(0.1, wall_height, 60); //depth, height, width
     var wall_1 = new THREE.Mesh(wall_geo_1, south_wall_materials);
@@ -765,7 +649,6 @@
     wall_1.recieveShadows = true;
     scene.add(wall_1);
     ////////////////////////////////////////
-
     //wall 2 - back of garage
     var wall_geo_2 = new THREE.BoxGeometry(0.1, wall_height, 50);
     var wall_2 = new THREE.Mesh(wall_geo_2, west_wall_materials);
@@ -775,7 +658,6 @@
     wall_2.recieveShadows = true;
     scene.add(wall_2);
     ////////////////////////////////////////
-
     //wall 3 - back of house
     var wall_geo_3 = new THREE.BoxGeometry(0.1, wall_height, 300);
     var wall_3 = new THREE.Mesh(wall_geo_3, north_wall_materials);
@@ -784,7 +666,6 @@
     wall_3.recieveShadows = true;
     scene.add(wall_3);
     ////////////////////////////////////////
-
     //wall 4 - front of house cont.
     var wall_geo_4 = new THREE.BoxGeometry(0.1, wall_height, 20);
     var wall_4 = new THREE.Mesh(wall_geo_4, thin_south_wall_materials);
@@ -793,7 +674,6 @@
     wall_4.recieveShadows = true;
     scene.add(wall_4);
     ////////////////////////////////////////
-
     //wall 5 - front of garage
     var wall_geo_5 = new THREE.BoxGeometry(0.1, wall_height, 20);
     var wall_5 = new THREE.Mesh(wall_geo_5, wall_mat);
@@ -803,7 +683,6 @@
     wall_5.recieveShadows = true;
     scene.add(wall_5);
     ////////////////////////////////////////
-
     //wall 6 - front of garage cont
     var wall_geo_6 = new THREE.BoxGeometry(0.1, wall_height, 20);
     var wall_6 = new THREE.Mesh(wall_geo_6, wall_mat);
@@ -813,7 +692,6 @@
     wall_6.recieveShadows = true;
     scene.add(wall_6);
     ////////////////////////////////////////
-
     //wall 7 - front of house, kitchen wall
     var wall_geo_7 = new THREE.BoxGeometry(0.1, wall_height, 50);
     var wall_7 = new THREE.Mesh(wall_geo_7, west_wall_materials);
@@ -823,7 +701,6 @@
     wall_7.recieveShadows = true;
     scene.add(wall_7);
     ////////////////////////////////////////
-
     //wall 8 - side of house, dining and living room walls (long wall)
     var wall_geo_8 = new THREE.BoxGeometry(0.1, wall_height, 200);
     var wall_8 = new THREE.Mesh(wall_geo_8, wide_south_wall_materials);
@@ -832,7 +709,6 @@
     wall_8.recieveShadows = true;
     scene.add(wall_8);
     ////////////////////////////////////////
-
     //wall 9 - house-to-garden wall
     var wall_geo_9 = new THREE.BoxGeometry(0.1, wall_height, 70);
     var wall_9 = new THREE.Mesh(wall_geo_9, south_wall_materials);
@@ -842,7 +718,6 @@
     wall_9.recieveShadows = true;
     scene.add(wall_9);
     ////////////////////////////////////////
-
     //wall 10 - living room-to-kitchen wall
     var wall_geo_10 = new THREE.BoxGeometry(0.1, wall_height, 50);
     var wall_10 = new THREE.Mesh(wall_geo_10, wall_mat);
@@ -851,7 +726,6 @@
     wall_10.recieveShadows = true;
     scene.add(wall_10);
     ////////////////////////////////////////
-
     //wall 11 - living room-to-kitchen wall cont
     var wall_geo_11 = new THREE.BoxGeometry(0.1, wall_height, 20);
     var wall_11 = new THREE.Mesh(wall_geo_11, wall_mat);
@@ -860,7 +734,6 @@
     wall_11.recieveShadows = true;
     scene.add(wall_11);
     ////////////////////////////////////////
-
     //wall 12 - front of house, kitchen wall
     var wall_geo_12 = new THREE.BoxGeometry(0.1, wall_height, 70);
     var wall_12 = new THREE.Mesh(wall_geo_12, wall_mat);
@@ -872,18 +745,52 @@
     ////////////////////////////////////////
     //END OF WALLS
     ////////////////////////////////////////
-
     //////
     //cloth stuff
     //////
+    var pinsFormation = [];
+    var pins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    pinsFormation.push(pins);
 
+    // cloth material
+    var clothTexture = texture_loader.load('tex/cloth.png');
+    clothTexture.wrapS = clothTexture.wrapT = THREE.RepeatWrapping;
+    clothTexture.anisotropy = 16;
+    var clothMaterial = new THREE.MeshPhongMaterial({
+      specular: 0x030303,
+      map: clothTexture,
+      side: THREE.DoubleSide,
+      alphaTest: 0.5
+    });
 
+    // cloth geometry
+    clothGeometry = new THREE.ParametricGeometry(clothFunction, cloth.w, cloth.h);
+    clothGeometry.dynamic = true;
+    var uniforms = {
+      texture: {
+        value: clothTexture
+      }
+    };
+    var vertexShader = document.getElementById('vertexShaderDepth').textContent;
+    var fragmentShader = document.getElementById('fragmentShaderDepth').textContent;
+
+    // cloth mesh
+    object = new THREE.Mesh(clothGeometry, clothMaterial);
+    object.position.set(-35, 6, 15);
+    object.scale.set(0.1, 0.1, 0.1);
+    object.castShadow = true;
+    scene.add(object);
+    object.customDepthMaterial = new THREE.ShaderMaterial({
+      uniforms: uniforms,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      side: THREE.DoubleSide
+    });
 
     ////////////////////////////////////////
     //BEGIN OBJECTS
     ////////////////////////////////////////
     var mtlLoader = new THREE.MTLLoader();
-
     // lightswitch
     mtlLoader.load("obj/lightswitch/lightswitch.mtl", function (materials) {
       materials.preload();
@@ -896,9 +803,7 @@
         object.scale.set(20, 20, 20);
         object.castShadow = true;
         object.name = "lightswitch";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -909,21 +814,18 @@
         })
       });
     });
-
     // fireplace
     mtlLoader.load("obj/fireplace/fireplace.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
       objLoader.load("obj/fireplace/fireplace.obj", function (object) {
-        object.position.set(25, 0.5, -92.5);
+        object.position.set(5, 0.5, -92.5);
         object.rotation.y = (Math.PI * (360 / 180));
         object.scale.set(2, 2, 2);
         object.castShadow = true;
         object.name = "fireplace";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -934,7 +836,6 @@
         })
       });
     });
-
     // living light shade
     mtlLoader.load("obj/bulb/bigger_lampshade.mtl", function (materials) {
       materials.preload();
@@ -945,9 +846,7 @@
         object.scale.set(1, 1, 1);
         object.castShadow = true;
         object.name = "desk";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -958,7 +857,6 @@
         })
       });
     });
-
     // light bulb
     mtlLoader.load("obj/bulb/dangle-bulb.mtl", function (materials) {
       materials.preload();
@@ -970,19 +868,14 @@
         object.position.set(5, 18, -40); //living_1
         object.castShadow = true;
         object.name = "bulb";
-
         scene.add(object);
-
         var my_hanging_bulbs = [object.clone(), object.clone(), object.clone()]
-
         my_hanging_bulbs[0].position.set(-25, 18, 160); //garage_1
         my_hanging_bulbs[1].position.set(-25, 18, 185); //garage_2
         my_hanging_bulbs[2].position.set(30, 18, 75); //kitchen_1
-
         for (var i = 0; i < my_hanging_bulbs.length; i++) {
           my_hanging_bulbs[i].name += [i];
           scene.add(my_hanging_bulbs[i]);
-
           my_hanging_bulbs[i].traverse(function (obj) {
             if (obj instanceof THREE.Mesh) {
               obj.receiveShadow = true;
@@ -994,7 +887,6 @@
         }
       });
     });
-
     //sofa
     mtlLoader.load("obj/sofa/sofa.mtl", function (materials) {
       materials.preload();
@@ -1006,9 +898,7 @@
         //object.scale.set(1, 0.25, 0.25);
         object.castShadow = true;
         object.name = "sofa";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -1019,21 +909,19 @@
         })
       });
     });
-
     //foot stool
     mtlLoader.load("obj/footstool/footstool.mtl", function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
       objLoader.load("obj/footstool/footstool.obj", function (object) {
-        object.position.set(-10, 0, -50);
+        //object.position.set(-10, 0, -50);
+        object.position.set(0, 0, -80);
         object.rotation.y = (Math.PI * (90 / 180));
-        object.scale.set(0.25, 0.25, 0.25);
+        object.scale.set(1.5, 1.5, 1.5);
         object.castShadow = true;
         object.name = "foot stool";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -1044,7 +932,6 @@
         })
       });
     });
-
     //dining room table
     mtlLoader.load("obj/table/table.mtl", function (materials) {
       materials.preload();
@@ -1055,9 +942,7 @@
         object.scale.set(0.25, 0.25, 0.25);
         object.castShadow = true;
         object.name = "table";
-
         scene.add(object);
-
         object.traverse(function (obj) {
           if (obj instanceof THREE.Mesh) {
             obj.receiveShadow = true;
@@ -1068,7 +953,6 @@
         })
       });
     });
-
     //dining room chair
     mtlLoader.load("obj/chair/chair.mtl", function (materials) {
       materials.preload();
@@ -1079,20 +963,16 @@
         object.scale.set(0.25, 0.25, 0.25);
         object.castShadow = true;
         object.name = "chair";
-
         scene.add(object);
-
         var my_chairs = [object.clone(), object.clone(), object.clone()]
         my_chairs[0].position.set(10, 0, -5);
         my_chairs[1].position.set(-5, 0, 5);
         my_chairs[1].rotation.y = (Math.PI * (180 / 180));
         my_chairs[2].position.set(-5, 0, -5);
         my_chairs[2].rotation.y = (Math.PI * (180 / 180));
-
         for (var i = 0; i < my_chairs.length; i++) {
           my_chairs[i].name += [i];
           scene.add(my_chairs[i]);
-
           my_chairs[i].traverse(function (obj) {
             if (obj instanceof THREE.Mesh) {
               obj.receiveShadow = true;
@@ -1104,47 +984,51 @@
         }
       });
     });
-
     ////////////////////////////////////////
     //END OBJECTS
     ////////////////////////////////////////
-
     // re-initialise on window resize
     window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     function render() {
       renderer.render(scene, camera);
       requestAnimationFrame(render);
-      
+      var time = Date.now();
       //fire stuff
-      var time = Date.now() * 0.005;
-      particleSystem.rotation.z = 0.01 * time;
+      particleSystem.rotation.z = 0.01 * (time * 0.005);
       var sizes = geometry.attributes.size.array;
       for (var i = 0; i < particles; i++) {
-          sizes[i] = (1 + Math.sin(0.1 * i + time));
+        sizes[i] = (1 + Math.sin(0.1 * i + (time * 0.005)));
       }
       geometry.attributes.size.needsUpdate = true;
-
+      // cloth stuff
+      windStrength = Math.cos(time / 7000) * 20 + 40;
+      windForce.set(Math.sin(time / 2000), Math.cos(time / 3000), Math.sin(time / 1000)).normalize().multiplyScalar(windStrength);
+      simulate(time);
+      //more cloth stuff
+      var p = cloth.particles;
+      for (var i = 0, il = p.length; i < il; i++) {
+        clothGeometry.vertices[i].copy(p[i].position);
+      }
+      clothGeometry.computeFaceNormals();
+      clothGeometry.computeVertexNormals();
+      clothGeometry.normalsNeedUpdate = true;
+      clothGeometry.verticesNeedUpdate = true;
       if (controlsEnabled) {
         raycaster.ray.origin.copy(controls.getObject().position);
         raycaster.ray.origin.y -= 10;
         raycaster.ray.direction.set(controls.getObject().rotation.y);
-
         raycaster.setFromCamera(mouse_pos, camera);
-
         var bump_list = [];
         bump_list = raycaster.intersectObjects(objects);
-
         for (var i = 0; i < bump_list.length; i++) {
           //console.log(bump_list[i]);
-          
           if (bump_list[i].object.name.includes('switchbase')) {
             if (INTERACT) {
               garage_light_1.visible = garage_light_1.visible ? false : true
@@ -1153,38 +1037,27 @@
             }
           }
         }
-        
         var time = performance.now();
         var delta = (time - prevTime) / 1000;
-
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-
         velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-
         if (moveForward) velocity.z -= 400.0 * delta;
         if (moveBackward) velocity.z += 400.0 * delta;
-
         if (moveLeft) velocity.x -= 400.0 * delta;
         if (moveRight) velocity.x += 400.0 * delta;
-
         controls.getObject().translateX(velocity.x * delta);
         controls.getObject().translateY(velocity.y * delta);
         controls.getObject().translateZ(velocity.z * delta);
-
         if (controls.getObject().position.y < 10) {
           velocity.y = 0;
           controls.getObject().position.y = 10;
         }
-
         prevTime = time;
       }
-
       renderer.render(scene, camera);
     }
-
     render();
-
     //start garage_light_2 flicker
     //can't use setInterval with a variable for time
     //console.log("i am calling setTimeout on flicker_garage_light")
