@@ -103,9 +103,9 @@
     document.body.appendChild(renderer.domElement);
     // define the scene 			
     var scene = new THREE.Scene();
-    //Add an axis to center of the screen
-    var axis = new THREE.AxisHelper(10);
-    scene.add(axis);
+    //Add axis to center of graphical space, to help with positioning
+    //var axis = new THREE.AxisHelper(10);
+    //scene.add(axis);
     // define the camera from which the scene will be rendered and seen
     var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     //add controls
@@ -158,7 +158,6 @@
         break;
       case 32:
         INTERACT = true;
-        //trigger global interact switch
         break;
       case 27: // esc
         //stop controls
@@ -227,7 +226,7 @@
       mouse_pos.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse_pos.y = -(event.clientY / window.innerHeight) * 2 + 1;
     }
-    var raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 10);
+    var raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 25);
     scene.add(controls.getObject());
     ////////////////////////////////
     //ambient light
